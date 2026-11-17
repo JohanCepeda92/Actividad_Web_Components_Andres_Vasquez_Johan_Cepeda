@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fichas de mascotas · Veterinaria Patitas</title>
+
+  <!-- Script en el <head> con defer: se ejecuta cuando el HTML ya se leyó completo,
+       así el <template> ya existe cuando main.js lo busca. -->
+  <script src="js/main.js" defer></script>
+
+  <!-- Estilos de la PÁGINA (fuera del componente). No afectan el interior del Shadow DOM. -->
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6fb;
+      color: #1f2933;
+    }
+
+    .encabezado {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+    }
+
+    .encabezado h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    .encabezado p {
+      margin: 0.5rem 0 0;
+      color: #616e7c;
+    }
+
+    .leyenda {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      margin: 1.25rem 0 0;
+      padding: 0;
+      list-style: none;
+      font-size: 0.9rem;
+      color: #52606d;
+    }
+
+    .leyenda li::before {
+      content: "";
+      display: inline-block;
+      width: 0.7rem;
+      height: 0.7rem;
+      margin-right: 0.4rem;
+      border-radius: 50%;
+      background: var(--color);
+    }
+
+    .fichas {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem 3rem;
+    }
+
+    /* Mientras el navegador no registra el componente, se oculta
+       para que no se vea el texto del slot sin estilos. */
+    ficha-mascota:not(:defined) {
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- R1 · Template propio: el navegador NO lo muestra ni ejecuta nada de su interior.
+       Solo sirve de molde: main.js lo clona dentro del Shadow DOM de cada ficha. -->
+  <template id="tpl-ficha-mascota">
+    <!-- R1 · <style> del template: queda encapsulado en el Shadow DOM de cada ficha -->
+    <style>
+      :host {
+        display: block;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: #1f2933;
+      }
+
+      .ficha {
+        --acento: #9aa5b1;
+        --acento-suave: #f0f4f8;
+        height: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem 1.5rem;
+        background: #ffffff;
+        border-top: 6px solid var(--acento);
+        border-radius: 16px;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .ficha:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+      }
+
+      /* El color de acento cambia según el estado de la vacuna (lo calcula main.js) */
+      .ficha[data-estado="al-dia"] {
+        --acento: #2f9e6f;
+        --acento-suave: #e3f6ec;
+      }
+
+      .ficha[data-estado="proxima"] {
+        --acento: #d08c00;
+        --acento-suave: #fff4d6;
+      }
+
+      .ficha[data-estado="vencida"] {
+        --acento: #d64545;
+        --acento-suave: #fde8e8;
+      }
+
+      .cabecera {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+      }
+
+      .icono {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 3.25rem;
+        height: 3.25rem;
+        font-size: 1.9rem;
+        background: var(--acento-suave);
+        border-radius: 50%;
+      }
+
+      .nombre {
+        margin: 0;
+        font-size: 1.35rem;
+      }
+
+      .especie {
+        margin: 0.15rem 0 0;
+        color: #616e7c;
+        font-size: 0.95rem;
+      }
+
+      .especie::first-letter {
+        text-transform: uppercase;
+      }
+
+      .estado {
+        align-self: flex-start;
+        margin: 0;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--acento);
+        background: var(--acento-suave);
+        border-radius: 999px;
+      }
+
+      .datos {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem 2rem;
+        margin: 0;
+      }
+
+      .datos dt {
+        font-size: 0.72rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #7b8794;
+      }
+
+      .datos dd {
+        margin: 0.2rem 0 0;
+        font-weight: 600;
+      }
+
+      .nota {
+        margin-top: auto;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        line-height: 1.45;
+        color: #3e4c59;
+        background: #f8fafc;
+        border-left: 3px solid var(--acento);
+        border-radius: 8px;
+      }
+
+      .nota h3 {
+        margin: 0 0 0.35rem;
+        font-size: 0.72rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #7b8794;
+      }
+
+      /* Estilo para el contenido que llega desde fuera por el slot */
+      ::slotted(*) {
+        margin: 0;
+      }
+
+      .sin-nota {
+        color: #9aa5b1;
+      }
+    </style>
+
+    <article class="ficha">
+      <header class="cabecera">
+        <!-- R1 · Marcadores vacíos: main.js los rellena con los atributos -->
+        <span class="icono" aria-hidden="true"></span>
+        <div>
+          <h2 class="nombre"></h2>
+          <p class="especie"></p>
+        </div>
+      </header>
+
+      <p class="estado"></p>
+
+      <dl class="datos">
+        <div>
+          <dt>Edad</dt>
+          <dd class="edad"></dd>
+        </div>
+        <div>
+          <dt>Próxima vacuna</dt>
+          <dd class="vacuna"></dd>
+        </div>
+      </dl>
+
+      <section class="nota">
+        <h3>Nota del veterinario</h3>
+        <!-- R4 · Slot: aquí aparece el elemento con slot="nota" que se escriba dentro
+             de <ficha-mascota>. Si no se escribe ninguno, se ve el texto por defecto. -->
+        <slot name="nota"><em class="sin-nota">Sin observaciones registradas.</em></slot>
+      </section>
+    </article>
+  </template>
+
+  <header class="encabezado">
+    <h1>🐾 Veterinaria Patitas</h1>
+    <p>Fichas de pacientes y control de vacunas</p>
+    <ul class="leyenda">
+      <li style="--color: #2f9e6f">Vacunas al día</li>
+      <li style="--color: #d08c00">Vacuna en los próximos 30 días</li>
+      <li style="--color: #d64545">Vacuna vencida</li>
+    </ul>
+  </header>
+
+  <!-- R5 · Reutilización: el mismo componente usado 4 veces con datos distintos -->
+  <main class="fichas">
+
+    <!-- R3 · Atributos: nombre, especie, edad y proxima-vacuna (formato AAAA-MM-DD) -->
+    <ficha-mascota nombre="Luna" especie="perro" edad="3" proxima-vacuna="2026-11-10">
+      <!-- R4 · Contenido libre que entra por el slot "nota" -->
+      <p slot="nota">Alergia al pollo. Recordar la desparasitación en diciembre.</p>
+    </ficha-mascota>
+
+    <ficha-mascota nombre="Michi" especie="gato" edad="5" proxima-vacuna="2026-12-01">
+      <p slot="nota">Esterilizada en agosto. Se pone nerviosa en consulta: manipular con calma.</p>
+    </ficha-mascota>
+
+    <ficha-mascota nombre="Copito" especie="conejo" edad="2" proxima-vacuna="2027-03-15">
+      <p slot="nota">Dieta rica en heno. Control de dientes cada 6 meses.</p>
+    </ficha-mascota>
+
+    <!-- Sin contenido para el slot: muestra el texto por defecto del template -->
+    <ficha-mascota nombre="Kiwi" especie="ave" edad="1" proxima-vacuna="2027-01-20"></ficha-mascota>
+
+  </main>
+
+</body>
+</html>

@@ -4,8 +4,8 @@
 
 | Integrante | Parte a cargo |
 |---|---|
-| Andrés Vásquez | Parte 3 · Práctica (`index.html` y `js/main.js`) |
-| Johan Cepeda | Partes 1 y 2 · Investigación (`INVESTIGACION.md`) |
+| Andrés Vásquez |  
+| Johan Cepeda |
 
 ## Caso elegido: Ficha de mascota para una veterinaria
 
